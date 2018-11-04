@@ -47,9 +47,10 @@ def debug(type_, value, tb):
 
 
 def process(args):
-
+  
+  #首先读取数据文件
   if args.format == "adjlist":
-    G = graph.load_adjacencylist(args.input, undirected=args.undirected)
+    G = graph.load_adjacencylist(args.input, undirected=args.undirected) 
   elif args.format == "edgelist":
     G = graph.load_edgelist(args.input, undirected=args.undirected)
   elif args.format == "mat":
@@ -59,18 +60,18 @@ def process(args):
 
   print("Number of nodes: {}".format(len(G.nodes())))
 
-  num_walks = len(G.nodes()) * args.number_walks
+  num_walks = len(G.nodes()) * args.number_walks #计算总共需要的游走次数
 
   print("Number of walks: {}".format(num_walks))
 
-  data_size = num_walks * args.walk_length
+  data_size = num_walks * args.walk_length #每次游走的长度
 
   print("Data size (walks*length): {}".format(data_size))
 
-  if data_size < args.max_memory_data_size:
+  if data_size < args.max_memory_data_size: #首先处理可以放置进内存的游走数据
     print("Walking...")
     walks = graph.build_deepwalk_corpus(G, num_paths=args.number_walks,
-                                        path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))
+                                        path_length=args.walk_length, alpha=0, rand=random.Random(args.seed))#开始进行随机游走
     print("Training...")
     model = Word2Vec(walks, size=args.representation_size, window=args.window_size, min_count=0, sg=1, hs=1, workers=args.workers)
   else:

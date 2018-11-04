@@ -135,24 +135,60 @@ class Graph(defaultdict):
 
     while len(path) < path_length:
       cur = path[-1]
-      if len(G[cur]) > 0:
-        if rand.random() >= alpha:
+      if len(G[cur]) > 0: #如果当前节点存在邻居，则从邻居中选择节点
+        if rand.random() >= alpha: #如果大于回退的阈值则从邻居中选择节点
           path.append(rand.choice(G[cur]))
         else:
-          path.append(path[0])
+          path.append(path[0]) #否则就回到最初的节点？
       else:
         break
     return [str(node) for node in path]
+  
+
+#对随机游走的策略进行改写
+  def random_walk_tri(self, path_length, alpha=0, rand=random.Random(), start=None):
+    G = self
+    if start:
+      path = [start]
+    else:
+      path = [rand.choice(list(G.keys()))]
+    while len(path) < path_length:
+      cur = path[-1]
+      if (len(path) == 1 & len(G[cur]) > 0): #如果只选择了第一个节点，那么第二个节点从首节点的邻居写出，从而作为初始的边进行随机游走
+        path.append(rand.choice(G[cur]))
+      else if (len(G[cur]) == 0):
+        break
+      else: #在前序以存在两个及以上节点，那选取最近的两个节点作为随机游走的上下文，从而去发现下一个节点
+        before = path[-2]
+        if rand.random() >= alpha: #不回退，那么就要发现新的节点
+          #TODO 首先比对当前两个节点的共同邻居，然后再从中随机选择出一个新的节点放入游走序列中
+          #TODO 同时需要考虑的是，如果目标三个节点中只存在两两的关系，那么便会出现一个死循环，这里需要置入一个随机数来选择最近节点的邻居，来避免死循环
+          tmp = set(G[cur]).intersection(set(G[before]))
+          #比较激进的做法，如果没有共同邻居则停止随机游走，而且不考虑死循环的情况
+          if len(tmp) == 0:
+            break
+          else:
+            path.append(rand.choice(tmp))
+        else:
+          path.append(path[-2])
+    return [str(node) for node in path]
+
+
+
+
 
 # TODO add build_walks in here
+
+#num_paths 每个节点需要的游走次数
+#path_length 每条随机游走的长度
 
 def build_deepwalk_corpus(G, num_paths, path_length, alpha=0,
                       rand=random.Random(0)):
   walks = []
 
-  nodes = list(G.nodes())
+  nodes = list(G.nodes()) #拆分出图结构中的点
   
-  for cnt in range(num_paths):
+  for cnt in range(num_paths): #开始遍历每次随机游走
     rand.shuffle(nodes)
     for node in nodes:
       walks.append(G.random_walk(path_length, rand=rand, alpha=alpha, start=node))
