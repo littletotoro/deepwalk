@@ -147,6 +147,7 @@ class Graph(defaultdict):
 
 #对随机游走的策略进行改写
   def random_walk_tri(self, path_length, alpha=0, rand=random.Random(), start=None):
+    #print("test")
     G = self
     if start:
       path = [start]
@@ -154,9 +155,9 @@ class Graph(defaultdict):
       path = [rand.choice(list(G.keys()))]
     while len(path) < path_length:
       cur = path[-1]
-      if (len(path) == 1 & len(G[cur]) > 0): #如果只选择了第一个节点，那么第二个节点从首节点的邻居写出，从而作为初始的边进行随机游走
+      if (len(path) == 1 and len(G[cur]) > 0): #如果只选择了第一个节点，那么第二个节点从首节点的邻居写出，从而作为初始的边进行随机游走
         path.append(rand.choice(G[cur]))
-      else if (len(G[cur]) == 0):
+      elif (len(G[cur]) == 0):
         break
       else: #在前序以存在两个及以上节点，那选取最近的两个节点作为随机游走的上下文，从而去发现下一个节点
         before = path[-2]
@@ -164,13 +165,14 @@ class Graph(defaultdict):
           #TODO 首先比对当前两个节点的共同邻居，然后再从中随机选择出一个新的节点放入游走序列中
           #TODO 同时需要考虑的是，如果目标三个节点中只存在两两的关系，那么便会出现一个死循环，这里需要置入一个随机数来选择最近节点的邻居，来避免死循环
           tmp = set(G[cur]).intersection(set(G[before]))
-          #比较激进的做法，如果没有共同邻居则停止随机游走，而且不考虑死循环的情况
+          #比较激进的做法，如果没有共同邻居则从最近的节点获取邻居，而且不考虑死循环的后果
           if len(tmp) == 0:
-            break
+            path.append(rand.choice(G[cur]))
           else:
-            path.append(rand.choice(tmp))
+            path.append(rand.choice(list(tmp)))
         else:
           path.append(path[-2])
+    #print(len(path))
     return [str(node) for node in path]
 
 
@@ -185,13 +187,14 @@ class Graph(defaultdict):
 def build_deepwalk_corpus(G, num_paths, path_length, alpha=0,
                       rand=random.Random(0)):
   walks = []
+  print("build_deepwalk_corpus")
 
   nodes = list(G.nodes()) #拆分出图结构中的点
   
   for cnt in range(num_paths): #开始遍历每次随机游走
     rand.shuffle(nodes)
     for node in nodes:
-      walks.append(G.random_walk(path_length, rand=rand, alpha=alpha, start=node))
+      walks.append(G.random_walk(path_length, rand=rand, alpha=alpha, start=node)) #对某个节点起始的随机游走
   
   return walks
 
@@ -204,7 +207,7 @@ def build_deepwalk_corpus_iter(G, num_paths, path_length, alpha=0,
   for cnt in range(num_paths):
     rand.shuffle(nodes)
     for node in nodes:
-      yield G.random_walk(path_length, rand=rand, alpha=alpha, start=node)
+      yield G.random_walk(path_length, rand=rand, alpha=alpha, start=node) #对某个节点起始的随机游走
 
 
 def clique(size):
